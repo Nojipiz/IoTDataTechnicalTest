@@ -4,22 +4,22 @@ It was created using scala-cli so passing the Scala and JVM versions as paramete
 
 ## Running Part 1.
 
-For the first part, the only thing you need is [scala-cli] (https://scala-cli.virtuslab.org/), and then run it with the following command
+For the first part, the only thing you need is [scala-cli](https://scala-cli.virtuslab.org/), and then run it with the following command:
 
-``` bash
-scala-cli part1/Part1.scala
+``` 
+$ scala-cli part1/Part1.scala
 ```
 
 if there are some issues related to versions you can try using:
-``` bash
-scala-cli --jvm 21 part1/Part1.scala
+``` 
+$ scala-cli --jvm 21 part1/Part1.scala
 ```
 
 ## Running Part 2.
 
-This part is entirely containerized, you should have docker and docker-compose to be able to run the project.
-``` bash
-docker-compose up
+This part is entirely containerized, you should have docker and docker-compose to be able to run the project, you can start all of the containers with this command:
+``` 
+$ docker-compose up
 ```
 
 This command will create the producer, consumers, Kafka, Zookeper and Dragonfly containers, and will execute the mock data push into the **Kafka topic 'ip_data'**, by default it will be created with 4 partitions.
