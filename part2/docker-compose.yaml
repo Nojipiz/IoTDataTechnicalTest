@@ -1,0 +1,99 @@
+services:
+  zookeeper:
+    image: bitnami/zookeeper:3.9.1
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+    ports:
+      - "2181:2181"
+    logging:
+      driver: none
+
+  kafka:
+    image: bitnami/kafka:3.3.2
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: INTERNAL://:9092,EXTERNAL://0.0.0.0:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_CFG_NUM_PARTITIONS: 4
+      ALLOW_PLAINTEXT_LISTENER: 'yes'
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+      - "29092:29092"
+    logging:
+      driver: none
+
+  producer:
+    build: 
+      context: ./producer
+      args:
+        topic: ip_data
+        bootstrap_servers: kafka:9092
+        num_devices: 100
+        num_messages: 1500
+        pause_ms: 40
+    depends_on:
+      - kafka
+    logging:
+      driver: none
+
+  persistence:
+    image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
+    ulimits:
+      memlock: -1
+    ports:
+      - "6379:6379"
+  
+  consumer_one: 
+    depends_on:
+      - kafka
+      - persistence
+    build: 
+      context: ./consumer
+
+  consumer_two:
+    depends_on:
+      - consumer_one
+    build: 
+      context: ./consumer
+
+  consumer_three:
+    depends_on:
+      - consumer_one
+    build: 
+      context: ./consumer
+
+  # Web UIs, Disabled for better performance.
+  # persistence_web_ui:
+  #   image: rediscommander/redis-commander:latest
+  #   restart: always
+  #   depends_on:
+  #     - persistence
+  #   environment:
+  #     REDIS_HOSTS: persistence
+  #     REDIS_HOST: persistence
+  #     REDIS_PORT: persistence:6379
+  #     REDIS_PASSWORD: dragonfly
+  #     HTTP_USER: root
+  #     HTTP_PASSWORD: root
+  #   ports:
+  #     - 8081:8081
+
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui:latest
+  #   depends_on:
+  #     - kafka
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     KAFKA_CLUSTERS_0_NAME: local
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #     KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+  #   logging:
+  #     driver: none
